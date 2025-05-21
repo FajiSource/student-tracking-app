@@ -8,27 +8,31 @@ import {
     TouchableOpacity,
 } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { getYearName,yearlist } from '../../../utils/tools';
 
-const sampleCourses = [
-    { id: 'c1', name: '1st Year' },
-    { id: 'c2', name: '2st Year' },
-    { id: 'c3', name: '3st Year' },
-];
 
 const Levels = () => {
     const insets = useSafeAreaInsets();
     const router = useRouter();
-
+    const yearList = yearlist;
+    const { courseId, courseName } = useLocalSearchParams();
     const renderYearLevels = ({ item }) => (
         <TouchableOpacity
             style={styles.card}
             onPress={() => {
-               router.push(`/(screens)/exams/exams`);
+                router.push({
+                    pathname:`/(screens)/exams/exams`,
+                    params: {
+                        courseId: courseId,
+                        levelId: item.id,
+                        courseName: courseName,
+                    },
+                });
             }}
         >
-            <Text style={styles.name}>{item.name}</Text>
+            <Text style={styles.name}>{getYearName(item.level)}</Text>
         </TouchableOpacity>
     );
 
@@ -37,13 +41,13 @@ const Levels = () => {
             <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
                 <View style={[styles.container, { paddingTop: insets.top }]}>
 
-
+                
                     <View style={styles.header}>
                         <Text style={styles.title}>Year Levels</Text>
                     </View>
 
                     <FlatList
-                        data={sampleCourses}
+                        data={yearList}
                         renderItem={renderYearLevels}
                         keyExtractor={(item) => item.id}
                         contentContainerStyle={styles.list}

@@ -1,18 +1,29 @@
-import { StyleSheet, Text, View, Button, TextInput, SafeAreaView, TouchableNativeFeedback, Keyboard } from 'react-native';
+import {
+  StyleSheet, Text, View, Button,
+  TextInput, SafeAreaView, TouchableNativeFeedback, Keyboard
+} from 'react-native';
 import React, { useState } from 'react';
 import { Link, useRouter } from 'expo-router';
 import { useUser } from '../../hooks/useUser';
 
 const Login = () => {
-  const {user} = useUser();
-  const [email, setEmail] = useState('');
+  const { login } = useUser();
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const router = useRouter();
-  const handleLogin = () => {
-    console.log('Email:', email);
-    console.log('Password:', password);
 
-    router.replace("/(tabs)");
+  const handleLogin = async () => {
+    if (!username || !password) {
+      alert('Please enter both fields');
+      return;
+    }
+
+    try {
+      await login(username, password);
+      router.replace("/(tabs)");
+    } catch (err) {
+      alert('Login failed: Invalid credentials');
+    }
   };
 
   return (
@@ -22,10 +33,9 @@ const Login = () => {
 
         <TextInput
           style={styles.input}
-          placeholder="Email"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
+          placeholder="Username"
+          value={username}
+          onChangeText={setUsername}
         />
 
         <TextInput
@@ -37,9 +47,7 @@ const Login = () => {
         />
 
         <Button title="Login" onPress={handleLogin} />
-
-        <Link href="/(auth)/register" style={styles.link}>Register </Link>
-
+        <Link href="/(auth)/register" style={styles.link}>Register</Link>
       </SafeAreaView>
     </TouchableNativeFeedback>
   );

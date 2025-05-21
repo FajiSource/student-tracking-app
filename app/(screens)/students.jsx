@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     StyleSheet,
     Text,
@@ -9,45 +9,53 @@ import {
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-
-const sampleStudents = [
-    {
-        id: '1',
-        name: 'Juan Dela Cruz',
-        yearLevel: '1st Year',
-        studentId: '2023001',
-        profileImage: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png',
-    },
-    {
-        id: '2',
-        name: 'Maria Santos',
-        yearLevel: '2nd Year',
-        studentId: '2023002',
-        profileImage: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png',
-    },
-    {
-        id: '3',
-        name: 'Pedro Ramirez',
-        yearLevel: '3rd Year',
-        studentId: '2023003',
-        profileImage: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png',
-    },
-];
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { getYearName } from '../../utils/tools';
+import axios from 'axios';
 
 
 const Students = () => {
     const insets = useSafeAreaInsets();
     const router = useRouter();
+    const { courseId, levelId, blockId } = useLocalSearchParams();
 
+    const [students, setStudents] = useState([]);
+    useEffect(() => {
+        const fetchCourses = async () => {
+            try {
+                const response = await axios.get(`http://192.168.1.9:8000/api/students/block/${blockId}`);
+                const data = response.data;
+                setStudents(data);
+            } catch (error) {
+                console.error('Error fetching courses:', error);
+            }
+        };
+        fetchCourses();
+    }, []);
     const renderStudent = ({ item }) => (
-        <TouchableOpacity style={styles.card} onPress={() => router.replace(`/(screens)/student`)}>
+        <TouchableOpacity style={styles.card} onPress={() => router.replace({
+            pathname: `/(screens)/student`,
+            params: {
+                studentId: item.id.toString(),
+                fName: item.fName,
+                lName: item.lName,
+                nName: item.nName,
+                age: String(item.age),
+                phone: item.phone,
+                email: item.email,
+                image: item.image,
+                courseId: courseId,
+                levelId: levelId,
+                blockId: blockId
+            },
+        })}
+        >
             <View style={styles.cardContent}>
-                <Image source={{ uri: item.profileImage }} style={styles.profileImage} />
+                <Image source={{ uri: item.image !== null ? `http://192.168.1.9:8000/storage/${item.image}` : 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png' }} style={styles.profileImage} />
                 <View style={styles.info}>
-                    <Text style={styles.name}>{item.name}</Text>
-                    <Text style={styles.detail}>ID: {item.studentId}</Text>
-                    <Text style={styles.detail}>{item.yearLevel}</Text>
+                    <Text style={styles.name}>{item.fName} {item.nName} {item.lName}</Text>
+                    <Text style={styles.detail}>ID: {item.id}</Text>
+                    <Text style={styles.detail}>{getYearName(item.level_id)}</Text>
                 </View>
             </View>
         </TouchableOpacity>
@@ -58,13 +66,20 @@ const Students = () => {
         <SafeAreaProvider>
             <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
                 <View style={[styles.container, { paddingTop: insets.top }]}>
-                    
+
 
                     <View style={styles.header}>
                         <Text style={styles.title}>Students</Text>
                         <TouchableOpacity
                             style={styles.addButton}
-                            onPress={() => router.push('/(screens)/addStudent')}
+                            onPress={() => router.push({
+                                pathname: '/(screens)/addStudent',
+                                params: {
+                                    courseId: courseId,
+                                    levelId: levelId,
+                                    blockId: blockId,
+                                },
+                            })}
                         >
                             <Ionicons name="add-circle-outline" size={20} color="#fff" />
                             <Text style={styles.addButtonText}>Add Student</Text>
@@ -73,7 +88,7 @@ const Students = () => {
 
 
                     <FlatList
-                        data={sampleStudents}
+                        data={students}
                         renderItem={renderStudent}
                         keyExtractor={(item) => item.id}
                         contentContainerStyle={styles.list}

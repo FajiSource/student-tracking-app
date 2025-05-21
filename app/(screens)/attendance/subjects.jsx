@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
     StyleSheet,
     View,
@@ -8,24 +8,40 @@ import {
     TouchableOpacity,
 } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-
-const sampleCourses = [
-    { id: 'c1', name: 'Math' },
-    { id: 'c2', name: 'PE' },
-    { id: 'c3', name: 'DSA' },
-];
-
+import axios from 'axios';
+import { getDayByID } from '../../../utils/tools';
 const Subjects = () => {
     const insets = useSafeAreaInsets();
     const router = useRouter();
+    const { levelId, courseId } = useLocalSearchParams();
+    const [subjects, setSubjects] = React.useState([]);
+    useEffect(() => {
+        const fetchSubjects = async () => {
+            try {
+                const response = await axios.get(`http://192.168.1.9:8000/api/subjects/${levelId}/${courseId}`);
+                setSubjects(response.data);
+            } catch (error) {
+                console.error('Error fetching subjects:', error);
+            }
+        };
+        fetchSubjects();
+    }, [levelId, courseId]);
 
     const renderYearLevels = ({ item }) => (
         <TouchableOpacity
             style={styles.card}
             onPress={() => {
-                router.push('/(screens)/attendance/students')
+               
+                router.push({
+                    pathname: '/(screens)/attendance/students',
+                    params: {
+                        subjectId: item.id,
+
+                    }
+                });
+
             }}
         >
             <Text style={styles.name}>{item.name}</Text>
@@ -35,14 +51,16 @@ const Subjects = () => {
     return (
         <SafeAreaProvider>
             <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
+
                 <View style={[styles.container, { paddingTop: insets.top }]}>
 
                     <View style={styles.header}>
                         <Text style={styles.title}>Subjects</Text>
                     </View>
 
+
                     <FlatList
-                        data={sampleCourses}
+                        data={subjects}
                         renderItem={renderYearLevels}
                         keyExtractor={(item) => item.id}
                         contentContainerStyle={styles.list}
@@ -92,4 +110,22 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         color: '#333',
     },
+    addButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#28a745',
+        paddingVertical: 8,
+        paddingHorizontal: 14,
+        borderRadius: 8,
+        alignSelf: 'flex-start',
+        marginTop: 10,
+        marginBottom: 10
+    },
+    addButtonText: {
+        color: '#fff',
+        fontSize: 14,
+        fontWeight: '600',
+        marginLeft: 6,
+    },
+
 });

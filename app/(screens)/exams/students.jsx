@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     StyleSheet,
     Text,
@@ -6,50 +6,34 @@ import {
     View,
     FlatList,
     Image,
-    Platform,
     Modal,
     TextInput,
 } from 'react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useLocalSearchParams } from 'expo-router';
 
-const sampleStudents = [
-    {
-        id: '1',
-        name: 'Juan Dela Cruz',
-        yearLevel: '1st Year',
-        studentId: '2023001',
-        profileImage: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png',
-    },
-    {
-        id: '2',
-        name: 'Maria Santos',
-        yearLevel: '2nd Year',
-        studentId: '2023002',
-        profileImage: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png',
-    },
-    {
-        id: '3',
-        name: 'Pedro Ramirez',
-        yearLevel: '3rd Year',
-        studentId: '2023003',
-        profileImage: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png',
-    },
-];
+const BASE_URL = 'http://192.168.1.9:8000/api';
+const DEFAULT_PROFILE = 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png';
 
 const Students = () => {
     const insets = useSafeAreaInsets();
-    const [date, setDate] = useState(new Date());
-
-
+    const [students, setStudents] = useState([]);
     const [scores, setScores] = useState({});
-
-
     const [modalVisible, setModalVisible] = useState(false);
     const [currentStudent, setCurrentStudent] = useState(null);
     const [inputScore, setInputScore] = useState('');
 
+    const { examId, levelId } = useLocalSearchParams();
 
+    useEffect(() => {
+        fetch(`${BASE_URL}/students/level/${levelId}`)
+            .then(res => res.json())
+            .then(data => setStudents(data))
+            .catch(err => {
+                console.error(err);
+                alert('Failed to load students');
+            });
+    }, []);
 
     const openScoreModal = (student) => {
         setCurrentStudent(student);
@@ -57,33 +41,59 @@ const Students = () => {
         setModalVisible(true);
     };
 
-    const saveScore = () => {
+    const saveScore = async () => {
         if (inputScore.trim() === '') {
             alert('Please enter a score');
             return;
         }
-        setScores((prev) => ({
-            ...prev,
-            [currentStudent.id]: inputScore,
-        }));
-        setModalVisible(false);
+
+        try {
+            const response = await fetch(`${BASE_URL}/exams/add-score`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    student_id: currentStudent.id,
+                    exam_id: examId,
+                    score: inputScore,
+                }),
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.message || 'Something went wrong');
+            }
+
+            setScores((prev) => ({
+                ...prev,
+                [currentStudent.id]: inputScore,
+            }));
+
+            setModalVisible(false);
+        } catch (error) {
+            console.error(error);
+            alert('Failed to save score');
+        }
     };
 
+
     const renderStudent = ({ item }) => {
+        const fullName = `${item.fName} ${item.nName} ${item.lName}`;
+        const profileUri = item.image ? `http://192.168.1.9:8000/storage/${item.image}` : DEFAULT_PROFILE;
         const score = scores[item.id];
         const hasScore = score !== undefined;
 
         return (
             <View style={[styles.card, hasScore && styles.scoredCard]}>
                 <View style={styles.cardContent}>
-                    <Image source={{ uri: item.profileImage }} style={styles.profileImage} />
+                    <Image source={{ uri: profileUri }} style={styles.profileImage} />
                     <View style={styles.info}>
-                        <Text style={styles.name}>{item.name}</Text>
-                        <Text style={styles.detail}>ID: {item.studentId}</Text>
-                        <Text style={styles.detail}>{item.yearLevel}</Text>
-                        {hasScore && (
-                            <Text style={styles.scoreText}>Score: {score}</Text>
-                        )}
+                        <Text style={styles.name}>{fullName}</Text>
+                        <Text style={styles.detail}>ID: {item.id}</Text>
+                        <Text style={styles.detail}>{item.level?.level} Year</Text>
+                        {hasScore && <Text style={styles.scoreText}>Score: {score}</Text>}
                     </View>
                     <TouchableOpacity
                         style={[styles.markButton, hasScore && styles.marked]}
@@ -102,17 +112,12 @@ const Students = () => {
         <SafeAreaProvider>
             <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
                 <View style={[styles.container, { paddingTop: insets.top }]}>
-
-
-
-
                     <FlatList
-                        data={sampleStudents}
+                        data={students}
                         renderItem={renderStudent}
-                        keyExtractor={(item) => item.id}
+                        keyExtractor={(item) => item.id.toString()}
                         contentContainerStyle={styles.list}
                     />
-
 
                     <Modal
                         animationType="slide"
@@ -123,7 +128,7 @@ const Students = () => {
                         <View style={styles.modalOverlay}>
                             <View style={styles.modalContent}>
                                 <Text style={styles.modalTitle}>
-                                    {currentStudent ? `Add Score for ${currentStudent.name}` : ''}
+                                    {currentStudent ? `Add Score for ${currentStudent.fName}` : ''}
                                 </Text>
                                 <TextInput
                                     style={styles.scoreInput}

@@ -1,29 +1,53 @@
 import React from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Alert, Image } from 'react-native';
+import {
+    StyleSheet,
+    Text,
+    View,
+    TouchableOpacity,
+    Alert,
+    Image,
+} from 'react-native';
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 
 const Student = () => {
+    
     const insets = useSafeAreaInsets();
     const router = useRouter();
-
-    const student = {
-        name: 'Juan Dela Cruz',
-        age: 18,
-        studentId: '2023001',
-        class: 'BS Computer Science',
-        contact: {
-            email: 'juan@example.com',
-            phone: '+63 912 345 6789',
-        },
-        profileImage: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png',
-    };
+    const {
+        studentId,
+        fName,
+        lName,
+        nName,
+        age,
+        email,
+        phone,
+        courseId,
+        levelId,
+        blockId,
+        image
+    } = useLocalSearchParams();
+    const fullName = `${fName} ${nName} ${lName}`;
 
     const handleEdit = () => {
-
-        router.push('/(screens)/editStudent');
+        router.push({
+            pathname: '/(screens)/editStudent',
+            params: {
+                studentId,
+                fName,
+                lName,
+                nName,
+                age,
+                email,
+                phone,
+                courseId,
+                levelId,
+                blockId,
+                image
+            }
+        });
     };
+
 
     const handleDelete = () => {
         Alert.alert(
@@ -35,8 +59,7 @@ const Student = () => {
                     text: 'Delete',
                     style: 'destructive',
                     onPress: () => {
-
-                        console.log(`Deleted student ${student.studentId}`);
+                        console.log(`Deleted student ${studentId}`);
                         router.replace('/(screens)/students');
                     },
                 },
@@ -48,42 +71,42 @@ const Student = () => {
         <SafeAreaProvider>
             <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
                 <View style={[styles.container, { paddingTop: insets.top }]}>
-                  
-
                     <Text style={styles.title}>Student Profile</Text>
                     <View style={styles.imageContainer}>
-                        <Image source={{ uri: student.profileImage }} style={styles.profileImage} />
+                        <Image
+                            source={{
+                                uri: image !== 'null' && image
+                                    ? `http://192.168.1.9:8000/storage/${image}`
+                                    : 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png',
+                            }}
+                            style={styles.profileImage}
+                        />
                     </View>
 
                     <View style={styles.card}>
                         <View style={styles.infoRow}>
                             <Text style={styles.label}>Name</Text>
-                            <Text style={styles.value}>{student.name}</Text>
+                            <Text style={styles.value}>{fullName}</Text>
                         </View>
 
                         <View style={styles.infoRow}>
                             <Text style={styles.label}>Age</Text>
-                            <Text style={styles.value}>{student.age}</Text>
+                            <Text style={styles.value}>{age}</Text>
                         </View>
 
                         <View style={styles.infoRow}>
                             <Text style={styles.label}>Student ID</Text>
-                            <Text style={styles.value}>{student.studentId}</Text>
-                        </View>
-
-                        <View style={styles.infoRow}>
-                            <Text style={styles.label}>Class</Text>
-                            <Text style={styles.value}>{student.class}</Text>
+                            <Text style={styles.value}>{studentId}</Text>
                         </View>
 
                         <View style={styles.infoRow}>
                             <Text style={styles.label}>Email</Text>
-                            <Text style={styles.value}>{student.contact.email}</Text>
+                            <Text style={styles.value}>{email}</Text>
                         </View>
 
                         <View style={styles.infoRow}>
                             <Text style={styles.label}>Phone</Text>
-                            <Text style={styles.value}>{student.contact.phone}</Text>
+                            <Text style={styles.value}>{phone}</Text>
                         </View>
                     </View>
 
@@ -109,28 +132,26 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         backgroundColor: '#fff',
     },
-    backButton: {
-        marginBottom: 10,
-    },
-    backButtonText: {
-        color: '#007bff',
-        fontSize: 16,
-        fontWeight: '600',
-    },
     title: {
         fontSize: 22,
         fontWeight: '700',
         marginBottom: 20,
     },
+    imageContainer: {
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    profileImage: {
+        width: 120,
+        height: 120,
+        borderRadius: 60,
+        borderWidth: 2,
+        borderColor: '#007bff',
+    },
     card: {
         backgroundColor: '#f9f9f9',
         padding: 20,
         borderRadius: 12,
-        shadowColor: '#000',
-        shadowOpacity: 0.1,
-        shadowOffset: { width: 0, height: 1 },
-        shadowRadius: 3,
-        elevation: 2,
         marginBottom: 24,
     },
     infoRow: {
@@ -172,16 +193,4 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         textAlign: 'center',
     },
-    imageContainer: {
-        alignItems: 'center',
-        marginBottom: 20,
-    },
-    profileImage: {
-        width: 120,
-        height: 120,
-        borderRadius: 60,
-        borderWidth: 2,
-        borderColor: '#007bff',
-    },
-
 });

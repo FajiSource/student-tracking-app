@@ -1,6 +1,6 @@
 {
   "expo": {
-   "scheme": "shelfieapp",
+    "scheme": "shelfieapp",
     "name": "student-tracking",
     "slug": "student-tracking",
     "version": "1.0.0",
@@ -27,7 +27,8 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      "expo-secure-store"
     ]
   }
 }

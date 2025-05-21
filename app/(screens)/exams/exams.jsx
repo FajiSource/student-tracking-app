@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     StyleSheet,
     Text,
@@ -12,25 +12,20 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import axios from 'axios';
 
-const examsDataInitial = [
-    { id: '1', name: 'Math Final', date: '2025-06-10', done: true },
-    { id: '2', name: 'Physics Midterm', date: '2025-07-15', done: false },
-    { id: '3', name: 'Chemistry Quiz', date: '2025-06-20', done: false },
-];
+const BASE_URL = 'http://192.168.1.9:8000/api';
+// const levelId = 1; 
 
 const ExamItem = ({ exam, onPress }) => (
     <TouchableOpacity
         onPress={onPress}
-        style={[
-            styles.examCard,
-            exam.done ? styles.doneExam : styles.ongoingExam,
-        ]}
+        style={[styles.examCard, exam.done ? styles.doneExam : styles.ongoingExam]}
     >
         <View>
             <Text style={styles.examName}>{exam.name}</Text>
-            <Text style={styles.examDate}>{exam.date}</Text>
+            <Text style={styles.examDate}>{exam.startTime}</Text>
         </View>
         {exam.done && (
             <View style={styles.doneBadge}>
@@ -43,120 +38,95 @@ const ExamItem = ({ exam, onPress }) => (
 
 const Exams = () => {
     const router = useRouter();
-    const [examsData, setExamsData] = useState(examsDataInitial);
+    const [examsData, setExamsData] = useState([]);
     const [modalVisible, setModalVisible] = useState(false);
-    const [passingScore, setPassingScore] = useState('');
-
     const [examName, setExamName] = useState('');
     const [startTime, setStartTime] = useState(new Date());
     const [endTime, setEndTime] = useState(new Date());
     const [maxScore, setMaxScore] = useState('');
-
+    const [passingScore, setPassingScore] = useState('');
     const [pickerMode, setPickerMode] = useState('date');
     const [activePicker, setActivePicker] = useState(null);
     const [showStartPicker, setShowStartPicker] = useState(false);
     const [showEndPicker, setShowEndPicker] = useState(false);
-
-    const handleAddExam = () => {
-        setModalVisible(true);
-    };
-
-    const handleExamPress = (exam) => {
-        router.push(`/(screens)/exams/students`);
-    };
+    const { levelId, courseId } = useLocalSearchParams();
+    useEffect(() => {
+        fetch(`${BASE_URL}/exams/get-by-l/${levelId}`)
+            .then(res => res.json())
+            .then(data => setExamsData(data))
+            .catch(err => {
+                console.error(err);
+                alert('Failed to load exams');
+            });
+    }, []);
 
     const showPicker = (which) => {
         setActivePicker(which);
         setPickerMode('date');
-        if (which === 'start') {
-            setShowStartPicker(true);
-        } else {
-            setShowEndPicker(true);
-        }
+        which === 'start' ? setShowStartPicker(true) : setShowEndPicker(true);
     };
 
     const onChangeStart = (event, selectedDateTime) => {
-        if (!selectedDateTime) {
-            setShowStartPicker(false);
-            return;
-        }
+        if (!selectedDateTime) return setShowStartPicker(false);
 
-        if (pickerMode === 'date') {
-            const newDate = new Date(startTime);
-            newDate.setFullYear(selectedDateTime.getFullYear());
-            newDate.setMonth(selectedDateTime.getMonth());
-            newDate.setDate(selectedDateTime.getDate());
-            setStartTime(newDate);
-            setPickerMode('time');
-        } else {
-            const newDate = new Date(startTime);
-            newDate.setHours(selectedDateTime.getHours());
-            newDate.setMinutes(selectedDateTime.getMinutes());
-            setStartTime(newDate);
-            setShowStartPicker(false);
-        }
+        const newDate = new Date(startTime);
+        pickerMode === 'date'
+            ? (newDate.setFullYear(selectedDateTime.getFullYear()),
+                newDate.setMonth(selectedDateTime.getMonth()),
+                newDate.setDate(selectedDateTime.getDate()),
+                setPickerMode('time'))
+            : (newDate.setHours(selectedDateTime.getHours()),
+                newDate.setMinutes(selectedDateTime.getMinutes()),
+                setShowStartPicker(false));
+        setStartTime(newDate);
     };
 
     const onChangeEnd = (event, selectedDateTime) => {
-        if (!selectedDateTime) {
-            setShowEndPicker(false);
-            return;
-        }
+        if (!selectedDateTime) return setShowEndPicker(false);
 
-        if (pickerMode === 'date') {
-            const newDate = new Date(endTime);
-            newDate.setFullYear(selectedDateTime.getFullYear());
-            newDate.setMonth(selectedDateTime.getMonth());
-            newDate.setDate(selectedDateTime.getDate());
-            setEndTime(newDate);
-            setPickerMode('time');
-        } else {
-            const newDate = new Date(endTime);
-            newDate.setHours(selectedDateTime.getHours());
-            newDate.setMinutes(selectedDateTime.getMinutes());
-            setEndTime(newDate);
-            setShowEndPicker(false);
-        }
+        const newDate = new Date(endTime);
+        pickerMode === 'date'
+            ? (newDate.setFullYear(selectedDateTime.getFullYear()),
+                newDate.setMonth(selectedDateTime.getMonth()),
+                newDate.setDate(selectedDateTime.getDate()),
+                setPickerMode('time'))
+            : (newDate.setHours(selectedDateTime.getHours()),
+                newDate.setMinutes(selectedDateTime.getMinutes()),
+                setShowEndPicker(false));
+        setEndTime(newDate);
     };
+
+    const handleAddExam = () => setModalVisible(true);
+
+    const handleExamPress = (exam) => router.push({
+        pathname: `/(screens)/exams/students`,
+        params: {
+            examId: exam.id,
+            levelId: levelId,
+            courseId: courseId,
+        },
+    });
 
     const saveExam = () => {
-        if (!examName.trim()) {
-            alert('Please enter exam name');
-            return;
-        }
-        if (!passingScore || isNaN(passingScore) || Number(passingScore) < 0 || Number(passingScore) > Number(maxScore)) {
-            alert('Please enter a valid passing score (≤ max score)');
-            return;
-        }
+        // if (!examName.trim()) return alert('Please enter exam name');
+        // if (!maxScore || isNaN(maxScore) || Number(maxScore) <= 0)
+        //     return alert('Enter valid max score');
+        // if (!passingScore || isNaN(passingScore) || Number(passingScore) > Number(maxScore))
+        //     return alert('Passing score must be valid and ≤ max score');
+        // if (endTime <= startTime) return alert('End time must be after start time');
 
-        if (endTime <= startTime) {
-            alert('End time must be after start time');
-            return;
-        }
-        if (!maxScore || isNaN(maxScore) || Number(maxScore) <= 0) {
-            alert('Please enter a valid max score');
-            return;
-        }
-
-        const newExam = {
-            id: (examsData.length + 1).toString(),
+        const payload = {
             name: examName,
-            date: startTime.toISOString().split('T')[0],
-            done: false,
-            startTime,
-            endTime,
+            startTime: startTime.toISOString(),
+            endTime: endTime.toISOString(),
             maxScore: Number(maxScore),
             passingScore: Number(passingScore),
+            subject_id: 5,
         };
+        axios.post(`${BASE_URL}/exams/add`, {...payload})
 
-
-        setExamsData((prev) => [newExam, ...prev]);
-        setModalVisible(false);
-        setExamName('');
-        setStartTime(new Date());
-        setEndTime(new Date());
-        setMaxScore('');
     };
+
 
     return (
         <SafeAreaView style={styles.container}>
@@ -167,7 +137,7 @@ const Exams = () => {
 
             <FlatList
                 data={examsData}
-                keyExtractor={(item) => item.id}
+                keyExtractor={(item) => item.id.toString()}
                 contentContainerStyle={{ paddingBottom: 24 }}
                 renderItem={({ item }) => (
                     <ExamItem exam={item} onPress={() => handleExamPress(item)} />
@@ -199,7 +169,6 @@ const Exams = () => {
                                 Start: {startTime.toLocaleString()}
                             </Text>
                         </TouchableOpacity>
-
                         {showStartPicker && (
                             <DateTimePicker
                                 value={startTime}
@@ -217,7 +186,6 @@ const Exams = () => {
                                 End: {endTime.toLocaleString()}
                             </Text>
                         </TouchableOpacity>
-
                         {showEndPicker && (
                             <DateTimePicker
                                 value={endTime}
@@ -228,17 +196,17 @@ const Exams = () => {
                         )}
 
                         <TextInput
-                            placeholder="Max Score (e.g. 50)"
+                            placeholder="Max Score"
                             style={styles.input}
-                            value={maxScore}
                             keyboardType="numeric"
+                            value={maxScore}
                             onChangeText={setMaxScore}
                         />
                         <TextInput
-                            placeholder="Passing Score (e.g. 25)"
+                            placeholder="Passing Score"
                             style={styles.input}
-                            value={passingScore}
                             keyboardType="numeric"
+                            value={passingScore}
                             onChangeText={setPassingScore}
                         />
 
@@ -249,7 +217,6 @@ const Exams = () => {
                             >
                                 <Text style={styles.modalButtonText}>Cancel</Text>
                             </TouchableOpacity>
-
                             <TouchableOpacity
                                 style={[styles.modalButton, styles.saveButton]}
                                 onPress={saveExam}

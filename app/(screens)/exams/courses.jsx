@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     StyleSheet,
     View,
@@ -10,25 +10,38 @@ import {
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import axios from 'axios';
 
-const sampleCourses = [
-    { id: 'c1', name: '1st Year' },
-    { id: 'c2', name: '2st Year' },
-    { id: 'c3', name: '3st Year' },
-];
-
-const Course = () => {
+const Courses = () => {
     const insets = useSafeAreaInsets();
     const router = useRouter();
+    const [courses, setCourses] = useState([]);
+    useEffect(() => {
+        const fetchCourses = async () => {
+            try {
+                const response = await axios.get('http://192.168.1.9:8000/api/courses');
 
-    const renderYearLevels = ({ item }) => (
+                setCourses(response.data);
+            } catch (error) {
+                console.error('Error fetching courses:', error);
+            }
+        };
+        fetchCourses();
+    }, []);
+    const renderCourse = ({ item }) => (
         <TouchableOpacity
             style={styles.card}
             onPress={() => {
-                router.push(`/(screens)/exams/levels`);
+                router.push({
+                    pathname:'/(screens)/exams/levels',
+                    params: {
+                        courseId: item.id,
+                        courseName: item.courseName,
+                    },
+                })
             }}
         >
-            <Text style={styles.name}>{item.name}</Text>
+            <Text style={styles.name}>{item.courseName}</Text>
         </TouchableOpacity>
     );
 
@@ -37,14 +50,14 @@ const Course = () => {
             <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
                 <View style={[styles.container, { paddingTop: insets.top }]}>
 
-                
+
                     <View style={styles.header}>
-                        <Text style={styles.title}>Year Levels</Text>
+                        <Text style={styles.title}>Courses</Text>
                     </View>
 
                     <FlatList
-                        data={sampleCourses}
-                        renderItem={renderYearLevels}
+                        data={courses}
+                        renderItem={renderCourse}
                         keyExtractor={(item) => item.id}
                         contentContainerStyle={styles.list}
                     />
@@ -54,7 +67,7 @@ const Course = () => {
     );
 };
 
-export default Course;
+export default Courses;
 
 const styles = StyleSheet.create({
     container: {

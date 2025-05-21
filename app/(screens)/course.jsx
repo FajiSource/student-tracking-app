@@ -8,27 +8,31 @@ import {
     TouchableOpacity,
 } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-
-const sampleCourses = [
-    { id: 'c1', name: '1st Year' },
-    { id: 'c2', name: '2st Year' },
-    { id: 'c3', name: '3st Year' },
-];
+// import { getYearName, yearlist } from '../../utils/tools';
+import {getYearName, yearlist} from '../../utils/tools';
 
 const Course = () => {
     const insets = useSafeAreaInsets();
     const router = useRouter();
-
+    const yearList = yearlist;
+    const { courseId, courseName } = useLocalSearchParams();
     const renderYearLevels = ({ item }) => (
         <TouchableOpacity
             style={styles.card}
             onPress={() => {
-                router.push(`/(screens)/blocks`);
+                router.push({
+                    pathname:`/(screens)/blocks`,
+                    params: {
+                        courseId: courseId,
+                        levelId: item.id,
+                        courseName: courseName,
+                    },
+                });
             }}
         >
-            <Text style={styles.name}>{item.name}</Text>
+            <Text style={styles.name}>{getYearName(item.level)}</Text>
         </TouchableOpacity>
     );
 
@@ -43,7 +47,7 @@ const Course = () => {
                     </View>
 
                     <FlatList
-                        data={sampleCourses}
+                        data={yearList}
                         renderItem={renderYearLevels}
                         keyExtractor={(item) => item.id}
                         contentContainerStyle={styles.list}

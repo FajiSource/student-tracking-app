@@ -1,31 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     StyleSheet,
     Text,
     TextInput,
     TouchableOpacity,
-    View,
     ScrollView,
     Image,
     Alert,
+   
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import axios from 'axios';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 
 const AddStudent = () => {
     const insets = useSafeAreaInsets();
     const router = useRouter();
-
-    const [name, setName] = useState('');
+    const { courseId, levelId, blockId } = useLocalSearchParams();
+    const [fName, setFName] = useState('');
+    const [lName, setLName] = useState('');
+    const [mName, setMName] = useState('');
     const [age, setAge] = useState('');
-    const [studentId, setStudentId] = useState('');
-    const [className, setClassName] = useState('');
-    const [contact, setContact] = useState('');
-    const [imageUri, setImageUri] = useState(null);
+    const [gender, setGender] = useState('');
+    const [phone, setPhone] = useState('');
     const [email, setEmail] = useState('');
-
+    const [birthdate, setBirthdate] = useState(new Date());
+    const [showDatePicker, setShowDatePicker] = useState(false);
+    const [imageUri, setImageUri] = useState(null);
 
     const pickImage = async () => {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -45,34 +48,62 @@ const AddStudent = () => {
         }
     };
 
-    const handleSave = () => {
-        if (!name || !age || !studentId || !className || !contact) {
-            Alert.alert('Error', 'Please fill in all required fields.');
+    const handleSave = async () => {
+        if (!fName || !lName || !age || !phone || !levelId || !blockId || !courseId) {
+            Alert.alert('Validation Error', 'Please fill in all required fields.');
             return;
         }
 
-        const newStudent = {
-            name,
-            age,
-            studentId,
-            className,
-            contact,
-            email,
-            profileImage: imageUri,
-        };
+        const formData = new FormData();
+        formData.append('fName', fName);
+        formData.append('lName', lName);
+        formData.append('mName', mName);
+        formData.append('age', age);
+        formData.append('gender', gender);
+        formData.append('birthdate', birthdate.toISOString().split('T')[0]);
+        formData.append('email', email);
+        formData.append('phone', phone);
+        formData.append('level_id', levelId);
+        formData.append('block_id', blockId);
+        formData.append('course_id', courseId);
 
-        console.log('Saved student:', newStudent);
-        Alert.alert('Success', 'Student added successfully!');
-        router.replace('/(screens)/students');
+        if (imageUri) {
+            formData.append('image', {
+                uri: imageUri,
+                name: 'profile.jpg',
+                type: 'image/jpeg',
+            });
+        }
+
+        try {
+            const res = await axios.post(
+                'http://192.168.1.9:8000/api/add-student',
+                formData,
+                {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                    },
+                }
+            );
+            Alert.alert('Success', 'Student added successfully!');
+            router.replace({
+                    pathname:`/(screens)/students`,
+                    params: {
+                        courseId: courseId,
+                        levelId: levelId,
+                        blockId: blockId,
+                    },
+                });
+        } catch (err) {
+            console.error(err.response?.data || err);
+            Alert.alert('Error', 'Failed to add student.');
+        }
     };
 
     return (
         <SafeAreaProvider>
             <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
                 <ScrollView contentContainerStyle={[styles.container, { paddingTop: insets.top }]}>
-
-                    {/* <Text style={styles.title}>Add Student</Text> */}
-
                     <TouchableOpacity onPress={pickImage} style={styles.imagePicker}>
                         {imageUri ? (
                             <Image source={{ uri: imageUri }} style={styles.image} />
@@ -81,56 +112,42 @@ const AddStudent = () => {
                         )}
                     </TouchableOpacity>
 
-                    <Text style={styles.label}>Full Name</Text>
-                    <TextInput
-                        style={styles.input}
-                        value={name}
-                        onChangeText={setName}
-                        placeholder="Enter full name"
-                    />
+                    <Text style={styles.label}>First Name</Text>
+                    <TextInput style={styles.input} value={fName} onChangeText={setFName} />
+
+                    <Text style={styles.label}>Last Name</Text>
+                    <TextInput style={styles.input} value={lName} onChangeText={setLName} />
+
+                    <Text style={styles.label}>Middle Name</Text>
+                    <TextInput style={styles.input} value={mName} onChangeText={setMName} />
 
                     <Text style={styles.label}>Age</Text>
-                    <TextInput
-                        style={styles.input}
-                        value={age}
-                        onChangeText={setAge}
-                        placeholder="Enter age"
-                        keyboardType="numeric"
-                    />
+                    <TextInput style={styles.input} value={age} onChangeText={setAge} keyboardType="numeric" />
 
-                    <Text style={styles.label}>Student ID</Text>
-                    <TextInput
-                        style={styles.input}
-                        value={studentId}
-                        onChangeText={setStudentId}
-                        placeholder="Enter student ID"
-                    />
+                    <Text style={styles.label}>Gender</Text>
+                    <TextInput style={styles.input} value={gender} onChangeText={setGender} />
 
-                    <Text style={styles.label}>Class / Year Level</Text>
-                    <TextInput
-                        style={styles.input}
-                        value={className}
-                        onChangeText={setClassName}
-                        placeholder="e.g. 1st Year / Grade 10"
-                    />
+                    <Text style={styles.label}>Birthdate</Text>
+                    <TouchableOpacity onPress={() => setShowDatePicker(true)} style={styles.input}>
+                        <Text>{birthdate.toDateString()}</Text>
+                    </TouchableOpacity>
+                    {showDatePicker && (
+                        <DateTimePicker
+                            value={birthdate}
+                            mode="date"
+                            display="default"
+                            onChange={(event, selectedDate) => {
+                                setShowDatePicker(false);
+                                if (selectedDate) setBirthdate(selectedDate);
+                            }}
+                        />
+                    )}
 
-                    <Text style={styles.label}>Contact Info</Text>
-                    <TextInput
-                        style={styles.input}
-                        value={contact}
-                        onChangeText={setContact}
-                        placeholder="Enter contact number or email"
-                        keyboardType="email-address"
-                    />
                     <Text style={styles.label}>Email</Text>
-                    <TextInput
-                        style={styles.input}
-                        value={email}
-                        onChangeText={setEmail}
-                        placeholder="Enter email address"
-                        keyboardType="email-address"
-                        autoCapitalize="none"
-                    />
+                    <TextInput style={styles.input} value={email} onChangeText={setEmail} />
+
+                    <Text style={styles.label}>Phone</Text>
+                    <TextInput style={styles.input} value={phone} onChangeText={setPhone} />
 
                     <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
                         <Text style={styles.saveButtonText}>Save Student</Text>
@@ -148,19 +165,6 @@ const styles = StyleSheet.create({
         flexGrow: 1,
         paddingHorizontal: 16,
         backgroundColor: '#fff',
-    },
-    backButton: {
-        marginBottom: 10,
-    },
-    backButtonText: {
-        color: '#007bff',
-        fontSize: 16,
-        fontWeight: '600',
-    },
-    title: {
-        fontSize: 24,
-        fontWeight: '700',
-        marginBottom: 20,
     },
     label: {
         fontSize: 14,

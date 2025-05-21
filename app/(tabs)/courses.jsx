@@ -8,20 +8,13 @@ import {
     Pressable,
     Dimensions,
 } from 'react-native';
+import axios from 'axios';
 import { useUser } from '../../hooks/useUser';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Header from '../../components/ui/Header';
 import sampleImage from '../../assets/noImage.png';
 import { useRouter } from 'expo-router';
-
-const data = [
-    {
-        id: '831yr831gd31vd319', courseName: 'BSIT', image: sampleImage
-
-    },
-    { id: '831y831gd31vd319', courseName: 'BSCS', image: sampleImage },
-    { id: '93ur94jf83jf38f3', courseName: 'CPE', image: sampleImage },
-];
+import { useEffect, useState } from 'react';
 
 const CourseBox = ({ course }) => {
     const router = useRouter();
@@ -41,7 +34,6 @@ const CourseBox = ({ course }) => {
 
 
         >
-            <Image source={course.image} style={styles.image} />
             <Text style={styles.courseName}>{course.courseName}</Text>
         </Pressable>
     );
@@ -50,6 +42,19 @@ const CourseBox = ({ course }) => {
 const Courses = () => {
     const { user } = useUser();
     const insets = useSafeAreaInsets();
+    const [courses, setCourses] = useState([]);
+   useEffect(() => {
+    const fetchCourses = async () => {
+        try {
+          const response = await axios.get('http://192.168.1.9:8000/api/courses');
+
+            setCourses(response.data);
+        } catch (error) {
+            console.error('Error fetching courses:', error);
+        }
+    };
+    fetchCourses();
+}, []);
 
     return (
         <SafeAreaProvider
@@ -62,7 +67,7 @@ const Courses = () => {
             <Header />
             <SafeAreaView style={styles.listWrapper}>
                 <FlatList
-                    data={data}
+                    data={courses}
                     renderItem={({ item }) => <CourseBox course={item} />}
                     keyExtractor={(course) => course.id}
                     contentContainerStyle={styles.flatList}

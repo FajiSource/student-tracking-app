@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     StyleSheet,
     View,
@@ -10,25 +10,38 @@ import {
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-
-const sampleCourses = [
-    { id: 'c1', name: 'BS Computer Science' },
-    { id: 'c2', name: 'BS Information Technology' },
-    { id: 'c3', name: 'BS Information Systems' },
-];
+import axios from 'axios';
 
 const Attendance = () => {
     const insets = useSafeAreaInsets();
     const router = useRouter();
+    const [courses, setCourses] = useState([]);
+    useEffect(() => {
+        const fetchCourses = async () => {
+            try {
+                const response = await axios.get('http://192.168.1.9:8000/api/courses');
 
+                setCourses(response.data);
+            } catch (error) {
+                console.error('Error fetching courses:', error);
+            }
+        };
+        fetchCourses();
+    }, []);
     const renderCourse = ({ item }) => (
         <TouchableOpacity
             style={styles.card}
             onPress={() => {
-                router.push('/(screens)/attendance/level')
+                router.push({
+                    pathname:'/(screens)/attendance/level',
+                    params: {
+                        courseId: item.id,
+                        courseName: item.courseName,
+                    },
+                })
             }}
         >
-            <Text style={styles.name}>{item.name}</Text>
+            <Text style={styles.name}>{item.courseName}</Text>
         </TouchableOpacity>
     );
 
@@ -37,13 +50,13 @@ const Attendance = () => {
             <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
                 <View style={[styles.container, { paddingTop: insets.top }]}>
 
-                 
+
                     <View style={styles.header}>
                         <Text style={styles.title}>Courses</Text>
                     </View>
 
                     <FlatList
-                        data={sampleCourses}
+                        data={courses}
                         renderItem={renderCourse}
                         keyExtractor={(item) => item.id}
                         contentContainerStyle={styles.list}

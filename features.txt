@@ -16,8 +16,6 @@ Store details: name, age, ID, class, contact info, etc.
 ✅ 6. Login/User Roles
 Admin (teacher/principal)
 
-
-
 ✅ 2. Attendance Tracking
 Mark daily attendance
 

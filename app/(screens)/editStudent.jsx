@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     StyleSheet,
     Text,
@@ -12,21 +12,43 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import axios from 'axios';
 
 const EditStudent = () => {
     const insets = useSafeAreaInsets();
     const router = useRouter();
+    const params = useLocalSearchParams();
 
     const [form, setForm] = useState({
-        name: 'Juan Dela Cruz',
-        age: '18',
-        studentId: '2023001',
-        email: 'juan@example.com',
-        phone: '+63 912 345 6789',
+        fName: '',
+        nName: '',
+        lName: '',
+        age: '',
+        studentId: '',
+        email: '',
+        phone: '',
     });
 
     const [profileImage, setProfileImage] = useState(null);
+    const [imageFile, setImageFile] = useState(null);
+
+
+    useEffect(() => {
+        setForm({
+            fName: params.fName || '',
+            nName: params.nName || '',
+            lName: params.lName || '',
+            age: params.age?.toString() || '',
+            studentId: params.studentId || '',
+            email: params.email || '',
+            phone: params.phone || '',
+        });
+
+        if (params.image && params.image !== 'null') {
+            setProfileImage(`http://192.168.1.9:8000/storage/${params.image}`);
+        }
+    }, []);
 
     const handleChange = (key, value) => {
         setForm({ ...form, [key]: value });
@@ -34,30 +56,75 @@ const EditStudent = () => {
 
     const pickImage = async () => {
         const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            mediaTypes: [ImagePicker.MediaType.Images],
             allowsEditing: true,
             aspect: [1, 1],
             quality: 1,
         });
 
+
         if (!result.canceled) {
             setProfileImage(result.assets[0].uri);
+            setImageFile(result.assets[0]);
         }
     };
 
-    const handleSave = () => {
-        Alert.alert('Success', 'Student information updated.');
-        router.replace('/(screens)/students');
+
+    const handleSave = async () => {
+        try {
+            let formData = new FormData();
+
+            formData.append('student_id', form.studentId);
+            formData.append('fName', form.fName);
+            formData.append('mName', form.nName);
+            formData.append('lName', form.lName);
+            formData.append('age', form.age);
+            formData.append('email', form.email);
+            formData.append('phone', form.phone);
+
+            if (imageFile) {
+                const uriParts = imageFile.uri.split('.');
+                const fileType = uriParts[uriParts.length - 1];
+                formData.append('image', {
+                    uri: imageFile.uri,
+                    name: `photo.${fileType}`,
+                    type: `image/${fileType}`,
+                });
+            }
+
+            const response = await axios.post(
+                'http://192.168.1.9:8000/api/students/update',
+                formData,
+                {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                    },
+                }
+            );
+
+            Alert.alert('Success', 'Student information updated.');
+            router.replace({
+                pathname: `/(screens)/students`,
+                params: {
+                    courseId: params.courseId,
+                    levelId: params.levelId,
+                    blockId: params.blockId,
+                },
+            });
+
+        } catch (error) {
+            console.log(error.response?.data || error.message);
+            Alert.alert('Error', error.response?.data?.error || 'Failed to update student');
+        }
     };
+
 
     return (
         <SafeAreaProvider>
             <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
                 <ScrollView contentContainerStyle={[styles.container, { paddingTop: insets.top }]}>
-                  
                     <Text style={styles.title}>Edit Student</Text>
 
-                  
                     <TouchableOpacity onPress={pickImage} style={styles.imageContainer}>
                         {profileImage ? (
                             <Image source={{ uri: profileImage }} style={styles.profileImage} />
@@ -70,7 +137,9 @@ const EditStudent = () => {
                     </TouchableOpacity>
 
                     {[
-                        { label: 'Name', key: 'name' },
+                        { label: 'First Name', key: 'fName' },
+                        { label: 'Middle Name', key: 'nName' },
+                        { label: 'Last Name', key: 'lName' },
                         { label: 'Age', key: 'age', keyboardType: 'numeric' },
                         { label: 'Student ID', key: 'studentId' },
                         { label: 'Email', key: 'email', keyboardType: 'email-address' },
@@ -102,14 +171,6 @@ const styles = StyleSheet.create({
     container: {
         paddingHorizontal: 16,
         paddingBottom: 40,
-    },
-    backButton: {
-        marginBottom: 10,
-    },
-    backButtonText: {
-        color: '#007bff',
-        fontSize: 16,
-        fontWeight: '600',
     },
     title: {
         fontSize: 22,

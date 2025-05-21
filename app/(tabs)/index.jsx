@@ -23,6 +23,8 @@ const Home = () => {
   const gotoAttendance = () => router.push("/(screens)/attendance/attendance");
   const gotoExams = () => router.push("/(screens)/exams/courses");
   const gotoReports = () => router.push("/(screens)/reports/courses");
+  const today = new Date().toISOString().split('T')[0];
+
   return (
     <SafeAreaProvider
       style={{
@@ -47,8 +49,8 @@ const Home = () => {
               console.log('Selected date:', day.dateString);
             }}
             markedDates={{
-              '2025-05-20': { selected: true, marked: true },
-              '2025-05-22': { marked: true },
+              [today]: { selected: true, marked: true },
+
             }}
             theme={{
               selectedDayBackgroundColor: '#007bff',
@@ -72,14 +74,14 @@ const Home = () => {
             <Image source={sampleImage} style={styles.image} />
             <Text style={styles.label}>Exams</Text>
           </Pressable>
-          <Pressable style={styles.item} onPress={gotoReports}>
+          {/* <Pressable style={styles.item} onPress={gotoReports}>
             <Image source={sampleImage} style={styles.image} />
             <Text style={styles.label}>Reports</Text>
-          </Pressable>
+          </Pressable> */}
         </View>
 
 
-        <View style={styles.sectionHeader}>
+        {/* <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Ongoing Exams</Text>
           <TouchableOpacity>
             <Text style={styles.viewAll}>View All</Text>
@@ -103,7 +105,7 @@ const Home = () => {
               <Text style={styles.examDetails}>Activity 6</Text>
             </View>
           </View>
-        </ScrollView>
+        </ScrollView> */}
       </ScrollView>
 
     </SafeAreaProvider>

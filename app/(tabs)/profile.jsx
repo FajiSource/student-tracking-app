@@ -8,51 +8,54 @@ import {
   ScrollView,
 } from 'react-native';
 import React from 'react';
-import sampleImage from '../../assets/noImage.png';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { useUser } from '../../hooks/useUser';
+import sampleImage from '../../assets/noImage.png';
+
+const BASE_URL = 'http://192.168.1.9:8000'; 
 
 const Profile = () => {
+  const { user, logout } = useUser();
+
+  const fullName = user?.fName && user?.lName ? `${user.fName} ${user.lName}` : user?.name || 'N/A';
+
+  const imageSource = user?.image
+    ? { uri: `${BASE_URL}/storage/${user.image}` }
+    : sampleImage;
+
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.container}>
         <ScrollView contentContainerStyle={styles.content}>
-
           <View style={styles.profileHeader}>
-            <Image source={sampleImage} style={styles.avatar} />
-            <Text style={styles.name}>John Doe</Text>
-            <Text style={styles.email}>john.doe@example.com</Text>
-            <TouchableOpacity style={styles.editButton}>
-              <Text style={styles.editButtonText}>Edit Profile</Text>
-            </TouchableOpacity>
+            <Image source={imageSource} style={styles.avatar} />
+            <Text style={styles.name}>{fullName}</Text>
+            <Text style={styles.email}>{user?.username}</Text>
           </View>
-
 
           <View style={styles.infoSection}>
             <Text style={styles.sectionTitle}>Account Info</Text>
             <View style={styles.infoItem}>
+              <Text style={styles.infoLabel}>Username</Text>
+              <Text style={styles.infoValue}>{user.token}</Text>
+            </View>
+            <View style={styles.infoItem}>
               <Text style={styles.infoLabel}>Role</Text>
-              <Text style={styles.infoValue}>Student</Text>
+              <Text style={styles.infoValue}>{user?.role}</Text>
             </View>
             <View style={styles.infoItem}>
-              <Text style={styles.infoLabel}>Department</Text>
-              <Text style={styles.infoValue}>Information Technology</Text>
+              <Text style={styles.infoLabel}>First Name</Text>
+              <Text style={styles.infoValue}>{user?.fName}</Text>
             </View>
             <View style={styles.infoItem}>
-              <Text style={styles.infoLabel}>Year Level</Text>
-              <Text style={styles.infoValue}>2nd Year</Text>
+              <Text style={styles.infoLabel}>Last Name</Text>
+              <Text style={styles.infoValue}>{user?.lName}</Text>
             </View>
           </View>
 
-
           <View style={styles.settingsSection}>
             <Text style={styles.sectionTitle}>Settings</Text>
-            <TouchableOpacity style={styles.settingItem}>
-              <Text style={styles.settingText}>Change Password</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.settingItem}>
-              <Text style={styles.settingText}>Notifications</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.settingItem}>
+            <TouchableOpacity style={styles.settingItem} onPress={logout}>
               <Text style={styles.settingText}>Log Out</Text>
             </TouchableOpacity>
           </View>
@@ -63,6 +66,8 @@ const Profile = () => {
 };
 
 export default Profile;
+
+
 
 const styles = StyleSheet.create({
   container: {
