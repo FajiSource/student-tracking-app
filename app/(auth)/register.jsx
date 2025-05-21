@@ -14,8 +14,8 @@ const Register = () => {
   const [lName, setLName] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('student'); // default role
-  const [image, setImage] = useState(null); // optional
+  const [role, setRole] = useState('teacher'); 
+  const [image, setImage] = useState(null);
 
   const handleRegister = async () => {
     if (!fName || !lName || !username || !password || !role) {
@@ -60,7 +60,7 @@ const Register = () => {
           onChangeText={setPassword}
           secureTextEntry
         />
-        {/* Role input (could be a dropdown/select later) */}
+      
         <TextInput
           style={styles.input}
           placeholder="Role (admin/teacher/student)"

@@ -1,140 +1,130 @@
-import { createContext, useEffect, useState } from "react";
 import axios from "axios";
+import { createContext, useEffect, useState } from "react";
 import * as SecureStore from 'expo-secure-store';
 
+export const UserContext = createContext();
 const BASE_URL = 'http://192.168.1.9:8000/api';
 
-export const UserContext = createContext();
-
 export const UserProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [authChecked, setAuthChecked] = useState(false);
+    const [user, setUser] = useState(null);
+    const [authChecked, setAuthChecked] = useState(false);
 
-  async function login(username, password) {
-    try {
-      const response = await axios.post(`${BASE_URL}/login`, {
-        username,
-        password,
-      });
+    async function login(username, password) {
+        try {
+            const response = await axios.post(`${BASE_URL}/login`, {
+                username,
+                password,
+            });
 
-      const { token, token_type } = response.data;
-      const authToken = `${token_type} ${token}`;
+            const { token, token_type, user } = response.data;
+            const authToken = `${token_type} ${token}`;
 
-      await SecureStore.setItemAsync('token', authToken);
-
-      const userResponse = await axios.get(`${BASE_URL}/user`, {
-        headers: {
-          Authorization: authToken,
-        },
-      });
-
-      setUser(userResponse.data);
-    } catch (error) {
-      if (error.response && error.response.status === 401) {
-        alert("Invalid credentials");
-      } else {
-        alert("Login failed");
-        console.error(error);
-      }
+            await SecureStore.setItemAsync('token', authToken);
+            setUser(user);
+        } catch (error) {
+            console.error("Login error:", error?.response?.data || error.message);
+            throw error;
+        }
     }
-  }
 
-  async function register({ fName, lName, username, password, role, image }) {
-    try {
-      const formData = new FormData();
-      formData.append('fName', fName);
-      formData.append('lName', lName);
-      formData.append('username', username);
-      formData.append('password', password);
-      formData.append('role', role);
+    async function logout() {
+        try {
+            const token = await SecureStore.getItemAsync('token');
+            if (!token) {
+                alert('No user token found');
+                return;
+            }
 
-      if (image) {
-        const filename = image.split('/').pop();
-        const match = /\.(\w+)$/.exec(filename ?? '');
-        const type = match ? `image/${match[1]}` : `image`;
+            await axios.post(`${BASE_URL}/logout`, null, {
+                headers: {
+                    Authorization: token,
+                },
+            });
 
-        formData.append('image', {
-          uri: image,
-          name: filename,
-          type,
-        });
-      }
-
-      await axios.post(`${BASE_URL}/register`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-
-      alert('Registration successful!');
-      return true;
-    } catch (error) {
-      if (error.response?.status === 422) {
-        const errors = error.response.data.errors;
-        let errorMsg = Object.values(errors).flat().join('\n');
-        alert(errorMsg);
-      } else {
-        alert('Registration failed');
-        console.error(error);
-      }
-      return false;
+            await SecureStore.deleteItemAsync('token');
+            setUser(null);
+            alert('Logout successful');
+        } catch (error) {
+            console.error("Logout error:", error?.response?.data || error.message);
+            alert('Logout failed');
+        }
     }
-  }
 
-  async function logout() {
-    try {
-      const token = await SecureStore.getItemAsync('token');
-      if (!token) {
-        alert('No user token found');
-        return;
-      }
 
-      await axios.post(`${BASE_URL}/logout`, null, {
-        headers: {
-          Authorization: token,
-        },
-      });
+    async function register({ fName, lName, username, password, role, image }) {
+        try {
+            const formData = new FormData();
+            formData.append('fName', fName);
+            formData.append('lName', lName);
+            formData.append('username', username);
+            formData.append('password', password);
+            formData.append('role', role);
 
-      await SecureStore.deleteItemAsync('token');
-      setUser(null);
-      alert('Logout successful');
-    } catch (error) {
-      console.error("Logout error:", error?.response?.data || error.message);
-      alert('Logout failed');
+            if (image) {
+
+                const filename = image.split('/').pop();
+                const match = /\.(\w+)$/.exec(filename ?? '');
+                const type = match ? `image/${match[1]}` : `image/jpeg`;
+                formData.append('image', {
+                    uri: image,
+                    name: filename,
+                    type,
+                });
+            }
+
+            const response = await axios.post(`${BASE_URL}/create-user`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+
+            alert('Registration successful!');
+            return true;
+        } catch (error) {
+            if (error.response?.status === 422) {
+
+                const errors = error.response.data.errors;
+                const errorMsg = Object.values(errors).flat().join('\n');
+                alert(errorMsg);
+            } else {
+                alert('Registration failed');
+                console.error(error);
+            }
+            return false;
+        }
     }
-  }
 
-  const getInitialUserValue = async () => {
-    try {
-      const storedToken = await SecureStore.getItemAsync('token');
+    const getInitialUserValue = async () => {
+        try {
+            const token = await SecureStore.getItemAsync('token') || null;
+            if (!token) {
+                setUser(null);
+                return;
+            }
 
-      if (storedToken) {
-        const response = await axios.get(`${BASE_URL}/user`, {
-          headers: {
-            Authorization: storedToken,
-          },
-        });
+            const response = await axios.get(`${BASE_URL}/user`, {
+                headers: {
+                    Authorization: token,
+                },
+            });
 
-        setUser(response.data);
-      } else {
-        setUser(null);
-      }
-    } catch (error) {
-      console.error("Token invalid or error checking token:", error);
-      await SecureStore.deleteItemAsync('token');
-      setUser(null);
-    } finally {
-      setAuthChecked(true);
-    }
-  };
+            setUser(response.data);
+        } catch (error) {
+            console.error("Token check failed:", error?.response?.data || error.message);
+            await SecureStore.deleteItemAsync('token');
+            setUser(null);
+        } finally {
+            setAuthChecked(true);
+        }
+    };
 
-  useEffect(() => {
-    getInitialUserValue();
-  }, []);
+    useEffect(() => {
+        getInitialUserValue();
+    }, []);
 
-  return (
-    <UserContext.Provider value={{ user, login, logout, register, setUser, authChecked }}>
-      {children}
-    </UserContext.Provider>
-  );
+    return (
+        <UserContext.Provider value={{ user, login, logout, register, setUser, authChecked }}>
+            {children}
+        </UserContext.Provider>
+    );
 };

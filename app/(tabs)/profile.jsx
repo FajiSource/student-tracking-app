@@ -21,14 +21,14 @@ const Profile = () => {
 
   const imageSource = user?.image
     ? { uri: `${BASE_URL}/storage/${user.image}` }
-    : sampleImage;
+    : 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png';
 
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.container}>
         <ScrollView contentContainerStyle={styles.content}>
           <View style={styles.profileHeader}>
-            <Image source={imageSource} style={styles.avatar} />
+            <Image source={{uri:'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'}} style={styles.avatar} />
             <Text style={styles.name}>{fullName}</Text>
             <Text style={styles.email}>{user?.username}</Text>
           </View>
@@ -37,7 +37,7 @@ const Profile = () => {
             <Text style={styles.sectionTitle}>Account Info</Text>
             <View style={styles.infoItem}>
               <Text style={styles.infoLabel}>Username</Text>
-              <Text style={styles.infoValue}>{user.token}</Text>
+              <Text style={styles.infoValue}>{user?.username}</Text>
             </View>
             <View style={styles.infoItem}>
               <Text style={styles.infoLabel}>Role</Text>
@@ -54,7 +54,7 @@ const Profile = () => {
           </View>
 
           <View style={styles.settingsSection}>
-            <Text style={styles.sectionTitle}>Settings</Text>
+          
             <TouchableOpacity style={styles.settingItem} onPress={logout}>
               <Text style={styles.settingText}>Log Out</Text>
             </TouchableOpacity>
