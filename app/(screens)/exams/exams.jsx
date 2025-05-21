@@ -108,12 +108,12 @@ const Exams = () => {
     });
 
     const saveExam = () => {
-        // if (!examName.trim()) return alert('Please enter exam name');
-        // if (!maxScore || isNaN(maxScore) || Number(maxScore) <= 0)
-        //     return alert('Enter valid max score');
-        // if (!passingScore || isNaN(passingScore) || Number(passingScore) > Number(maxScore))
-        //     return alert('Passing score must be valid and ≤ max score');
-        // if (endTime <= startTime) return alert('End time must be after start time');
+        if (!examName.trim()) return alert('Please enter exam name');
+        if (!maxScore || isNaN(maxScore) || Number(maxScore) <= 0)
+            return alert('Enter valid max score');
+        if (!passingScore || isNaN(passingScore) || Number(passingScore) > Number(maxScore))
+            return alert('Passing score must be valid and ≤ max score');
+        if (endTime <= startTime) return alert('End time must be after start time');
 
         const payload = {
             name: examName,

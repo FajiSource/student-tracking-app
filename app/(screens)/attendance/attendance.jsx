@@ -33,7 +33,7 @@ const Attendance = () => {
             style={styles.card}
             onPress={() => {
                 router.push({
-                    pathname:'/(screens)/attendance/level',
+                    pathname: '/(screens)/attendance/level',
                     params: {
                         courseId: item.id,
                         courseName: item.courseName,
@@ -49,7 +49,9 @@ const Attendance = () => {
         <SafeAreaProvider>
             <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
                 <View style={[styles.container, { paddingTop: insets.top }]}>
-
+                    <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+                        <Ionicons name="arrow-back" size={24} color="#007bff" />
+                    </TouchableOpacity>
 
                     <View style={styles.header}>
                         <Text style={styles.title}>Courses</Text>
