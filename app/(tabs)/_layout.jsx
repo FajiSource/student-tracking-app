@@ -1,36 +1,37 @@
 import { Tabs } from 'expo-router';
-import { FontAwesome } from '@expo/vector-icons';
+import { FontAwesome ,Ionicons} from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
-import { UserProvider } from '../../context/UserContext';
+import UserOnly from '../../components/auth/UserOnly';
 export default function TabLayout() {
     return (
         <>
-            <UserProvider>
+            <UserOnly>
                 <StatusBar value="auto" />
-                <Tabs  >
+                <Tabs screenOptions={{ headerShown: false }}>
                     <Tabs.Screen
                         name="index"
                         options={{
-                            title: 'Course',
+                            title: 'Home',
                             tabBarIcon: ({ color }) => <FontAwesome name='home' size={24} />,
                         }}
                     />
                     <Tabs.Screen
-                        name="about"
+                        name="courses"
                         options={{
-                            title: 'About',
-                            tabBarIcon: ({ color }) => <FontAwesome name='question' size={24} />,
+                            title: 'Courses',
+                            tabBarIcon: ({ color }) => <Ionicons name='school' size={24} />,
                         }}
                     />
                     <Tabs.Screen
-                        name="settings"
+                        name="profile"
                         options={{
-                            title: 'Settings',
-                            tabBarIcon: ({ color }) => <FontAwesome name='gear' size={24} />,
+                            title: 'Profile',
+                            tabBarIcon: ({ color }) => <FontAwesome name='user' size={24} />,
                         }}
                     />
                 </Tabs>
-            </UserProvider>
+            </UserOnly>
+
 
         </>
     );

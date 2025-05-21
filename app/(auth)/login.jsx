@@ -1,10 +1,10 @@
 import { StyleSheet, Text, View, Button, TextInput, SafeAreaView, TouchableNativeFeedback, Keyboard } from 'react-native';
 import React, { useState } from 'react';
 import { Link, useRouter } from 'expo-router';
-import { UserContext } from '../../context/UserContext';
+import { useUser } from '../../hooks/useUser';
 
 const Login = () => {
-  const {user} = UserContext();
+  const {user} = useUser();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const router = useRouter();

@@ -1,7 +1,22 @@
+
+
+
+
+
+
+
+*********************** done
+
  1. Student Management
 Add/edit/delete student profiles
 
 Store details: name, age, ID, class, contact info, etc.
+
+
+✅ 6. Login/User Roles
+Admin (teacher/principal)
+
+
 
 ✅ 2. Attendance Tracking
 Mark daily attendance
@@ -17,21 +32,8 @@ Manage subjects or course info
 
 ✅ 4. Performance Tracking
 Add test/exam results
-
 View student grades or progress
-
-✅ 5. Notifications or Alerts
-Notify parents or students (optional)
-
-Absence alerts, exam reminders
-
-✅ 6. Login/User Roles
-Admin (teacher/principal)
-
-Students or parents (optional)
 
 ✅ 7. Reports
 Attendance reports
-
 Grade reports
-
