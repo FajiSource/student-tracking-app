@@ -15,9 +15,13 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import axios from 'axios';
 import { formatDateForLaravel } from '../../../utils/tools';
-
+import { Picker } from '@react-native-picker/picker';
 const BASE_URL = 'http://192.168.1.9:8000/api';
 // const levelId = 1; 
+
+const subjects = [
+    { id: 1, name: 'Math' },
+];
 
 const ExamItem = ({ exam, onPress }) => (
     <TouchableOpacity
@@ -40,6 +44,7 @@ const ExamItem = ({ exam, onPress }) => (
 const Exams = () => {
     const router = useRouter();
     const [examsData, setExamsData] = useState([]);
+    const [subjectsData, setSubjectsData] = useState([]);
     const [modalVisible, setModalVisible] = useState(false);
     const [examName, setExamName] = useState('');
     const [startTime, setStartTime] = useState(new Date());
@@ -51,6 +56,20 @@ const Exams = () => {
     const [showStartPicker, setShowStartPicker] = useState(false);
     const [showEndPicker, setShowEndPicker] = useState(false);
     const { levelId, courseId } = useLocalSearchParams();
+    const [selectedSubject, setSelectedSubject] = useState(subjects[0].id);
+
+    useEffect(() => {
+        const fetchSubjects = async () => {
+            try {
+                const response = await axios.get(`${BASE_URL}/blocks/${levelId}/${courseId}`);
+                setSubjectsData(response.data);
+            } catch (error) {
+                console.error('Error fetching subjects:', error);
+            }
+        };
+        fetchSubjects();
+    },[]);
+
     useEffect(() => {
         fetch(`${BASE_URL}/exams/get-by-l/${levelId}`)
             .then(res => res.json())
@@ -118,7 +137,7 @@ const Exams = () => {
 
         const payload = {
 
-            "subject_id": 5,
+            "subject_id": selectedSubject,
             "name": examName,
             "startTime": formatDateForLaravel(startTime),
             "endTime": formatDateForLaravel(endTime),
@@ -142,7 +161,7 @@ const Exams = () => {
                 setPassingScore('');
                 setStartTime(new Date());
                 setEndTime(new Date());
-               
+
                 fetch(`${BASE_URL}/exams/get-by-l/${levelId}`)
                     .then(res => res.json())
                     .then(data => setExamsData(data));
@@ -187,7 +206,15 @@ const Exams = () => {
                 <View style={styles.modalOverlay}>
                     <View style={styles.modalContent}>
                         <Text style={styles.modalTitle}>Add New Exam</Text>
-
+                        <Picker
+                            selectedValue={selectedSubject}
+                            onValueChange={(itemValue) => setSelectedSubject(itemValue)}
+                            style={{ marginBottom: 16 }}
+                        >
+                            {subjectsData.map(subject => (
+                                <Picker.Item key={subject.id} label={subject.name} value={subject.id} />
+                            ))}
+                        </Picker>
                         <TextInput
                             placeholder="Exam Name"
                             style={styles.input}
