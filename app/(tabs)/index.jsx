@@ -154,6 +154,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
+    marginBottom: 10,
   },
   viewAll: {
     fontSize: 14,
