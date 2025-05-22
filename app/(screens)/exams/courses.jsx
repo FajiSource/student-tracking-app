@@ -33,7 +33,7 @@ const Courses = () => {
             style={styles.card}
             onPress={() => {
                 router.push({
-                    pathname:'/(screens)/exams/levels',
+                    pathname: '/(screens)/exams/levels',
                     params: {
                         courseId: item.id,
                         courseName: item.courseName,
@@ -54,7 +54,9 @@ const Courses = () => {
                     <View style={styles.header}>
                         <Text style={styles.title}>Courses</Text>
                     </View>
-
+                    <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+                        <Ionicons name="arrow-back" size={24} color="#007bff" />
+                    </TouchableOpacity>
                     <FlatList
                         data={courses}
                         renderItem={renderCourse}

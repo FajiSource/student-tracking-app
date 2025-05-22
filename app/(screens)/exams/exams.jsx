@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import axios from 'axios';
+import { formatDateForLaravel } from '../../../utils/tools';
 
 const BASE_URL = 'http://192.168.1.9:8000/api';
 // const levelId = 1; 
@@ -116,14 +117,47 @@ const Exams = () => {
         if (endTime <= startTime) return alert('End time must be after start time');
 
         const payload = {
-            name: examName,
-            startTime: startTime.toISOString(),
-            endTime: endTime.toISOString(),
-            maxScore: Number(maxScore),
-            passingScore: Number(passingScore),
-            subject_id: 5,
+
+            "subject_id": 5,
+            "name": examName,
+            "startTime": formatDateForLaravel(startTime),
+            "endTime": formatDateForLaravel(endTime),
+            "maxScore": parseInt(maxScore, 10),
+            "passingScore": parseInt(passingScore, 10),
+            "level_id": parseInt(levelId, 10)
         };
-        axios.post(`${BASE_URL}/exams/add`, {...payload})
+
+        axios.post("http://192.168.1.9:8000/api/exams/add", payload, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+            }
+        })
+
+            .then(response => {
+                alert('Exam added successfully!');
+                setModalVisible(false);
+                setExamName('');
+                setMaxScore('');
+                setPassingScore('');
+                setStartTime(new Date());
+                setEndTime(new Date());
+               
+                fetch(`${BASE_URL}/exams/get-by-l/${levelId}`)
+                    .then(res => res.json())
+                    .then(data => setExamsData(data));
+            })
+            .catch(error => {
+                console.error('Error adding exam:', JSON.stringify(error));
+                if (error.response && error.response.data && error.response.data.errors) {
+                    const messages = Object.values(error.response.data.errors).flat().join('\n');
+                    alert(`Validation error:\n${messages}`);
+                } else {
+                    alert('An error occurred while adding the exam.');
+                }
+            });
+
+
 
     };
 

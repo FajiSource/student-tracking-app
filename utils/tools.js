@@ -56,3 +56,9 @@ export const yearlist = [
 
     }
 ];
+
+
+export const formatDateForLaravel = (date) => {
+    const pad = (n, z = 2) => ('00' + n).slice(-z);
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}.${(date.getMilliseconds() * 1000).toString().padStart(6, '0')}`;
+};
