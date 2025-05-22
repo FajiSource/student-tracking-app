@@ -11,6 +11,8 @@ import {
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams } from 'expo-router';
+import { getYearName } from '../../../utils/tools';
+import axios from 'axios';
 
 const BASE_URL = 'http://192.168.1.9:8000/api';
 const DEFAULT_PROFILE = 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png';
@@ -22,23 +24,27 @@ const Students = () => {
     const [modalVisible, setModalVisible] = useState(false);
     const [currentStudent, setCurrentStudent] = useState(null);
     const [inputScore, setInputScore] = useState('');
-
+    const [scoreId, setScoreId] = useState(null);
     const { examId, levelId } = useLocalSearchParams();
-
-    useEffect(() => {
-        fetch(`${BASE_URL}/students/level/${levelId}`)
+    const fetchStudents = async () => {
+        fetch(`${BASE_URL}/exams/${examId}`)
             .then(res => res.json())
             .then(data => setStudents(data))
             .catch(err => {
                 console.error(err);
                 alert('Failed to load students');
             });
+    };
+
+    useEffect(() => {
+        fetchStudents();
     }, []);
 
     const openScoreModal = (student) => {
         setCurrentStudent(student);
         setInputScore(scores[student.id]?.toString() || '');
         setModalVisible(true);
+        setScoreId(student.id);
     };
 
     const saveScore = async () => {
@@ -48,29 +54,16 @@ const Students = () => {
         }
 
         try {
-            const response = await fetch(`${BASE_URL}/exams/add-score`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    student_id: currentStudent.id,
-                    exam_id: examId,
-                    score: inputScore,
-                }),
+            const response = await axios.post(`${BASE_URL}/exams/add-score`, {
+                score_id: scoreId,
+                score: inputScore,
             });
-
-            const result = await response.json();
-
-            if (!response.ok) {
-                throw new Error(result.message || 'Something went wrong');
-            }
 
             setScores((prev) => ({
                 ...prev,
                 [currentStudent.id]: inputScore,
             }));
-
+            fetchStudents();
             setModalVisible(false);
         } catch (error) {
             console.error(error);
@@ -79,20 +72,22 @@ const Students = () => {
     };
 
 
-    const renderStudent = ({ item }) => {
-        const fullName = `${item.fName} ${item.nName} ${item.lName}`;
-        const profileUri = item.image ? `http://192.168.1.9:8000/storage/${item.image}` : DEFAULT_PROFILE;
-        const score = scores[item.id];
-        const hasScore = score !== undefined;
 
+    const renderStudent = ({ item }) => {
+
+        const studentData = item.student;
+        const fullName = `${studentData.fName} ${studentData.nName} ${studentData.lName}`;
+        const profileUri = studentData.image ? `http://192.168.1.9:8000/storage/${studentData.image}` : DEFAULT_PROFILE;
+        const score = item.score;
+        const hasScore = score > 0;
         return (
             <View style={[styles.card, hasScore && styles.scoredCard]}>
                 <View style={styles.cardContent}>
                     <Image source={{ uri: profileUri }} style={styles.profileImage} />
                     <View style={styles.info}>
                         <Text style={styles.name}>{fullName}</Text>
-                        <Text style={styles.detail}>ID: {item.id}</Text>
-                        <Text style={styles.detail}>{item.level?.level} Year</Text>
+                        <Text style={styles.detail}>ID: {studentData.id}</Text>
+                        <Text style={styles.detail}>{getYearName(studentData?.level_id)}</Text>
                         {hasScore && <Text style={styles.scoreText}>Score: {score}</Text>}
                     </View>
                     <TouchableOpacity
