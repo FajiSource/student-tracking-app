@@ -23,7 +23,7 @@ const Students = () => {
     const [attendanceData, setAttendanceData] = useState([]);
     const [loading, setLoading] = useState(false);
     const [attendance, setAttendance] = useState({});
-
+    const [load,setLoad] = useState(false);
 
     const fetchAttendance = async () => {
         if (!subjectId) return;
@@ -58,7 +58,7 @@ const Students = () => {
     useEffect(() => {
         setAttendanceData([]);
         fetchAttendance();
-    }, [subjectId, date]);
+    }, [subjectId, date,load]);
 
     const toggleAttendance = async (item, studentId) => {
         const newStatus = !attendance[studentId];
@@ -75,6 +75,7 @@ const Students = () => {
                 await axios.post('http://192.168.1.9:8000/api/attendance/mark', {
                     attendance_id: item.id
                 });
+                setLoad(!load);
             } catch (error) {
                 console.error('Failed to mark attendance:', error);
             }
