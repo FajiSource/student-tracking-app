@@ -61,7 +61,7 @@ const Exams = () => {
     useEffect(() => {
         const fetchSubjects = async () => {
             try {
-                const response = await axios.get(`${BASE_URL}/blocks/${levelId}/${courseId}`);
+                const response = await axios.get(`${BASE_URL}/subjects/${levelId}/${courseId}`);
                 setSubjectsData(response.data);
             } catch (error) {
                 console.error('Error fetching subjects:', error);
